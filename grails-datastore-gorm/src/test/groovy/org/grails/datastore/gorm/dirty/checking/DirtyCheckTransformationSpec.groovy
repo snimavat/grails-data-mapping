@@ -1,5 +1,6 @@
 package org.grails.datastore.gorm.dirty.checking
 
+import grails.gorm.annotation.Entity
 import grails.gorm.dirty.checking.DirtyCheck
 import org.grails.datastore.mapping.dirty.checking.DirtyCheckable
 import spock.lang.Ignore
@@ -109,6 +110,31 @@ abstract class Author {
         child.name == "Stephen King"
     }
 
+    void "Test dirty check with belongsTo"() {
+        when:
+        Child child = new Child()
+        child.trackChanges()
+
+        then:
+        !child.hasChanged()
+        !child.hasChanged("parent")
+
+        when:
+        child.name = "test"
+
+        then:
+        child.hasChanged()
+        child.hasChanged("name")
+
+        when:
+        child.parent = new Parent()
+
+        then:
+        child.hasChanged()
+        child.hasChanged("name")
+        child.hasChanged("parent")
+
+    }
 
 
     void "Test dirty check with abstract inheritance via @Entity"() {
@@ -445,3 +471,14 @@ class KidsBook extends Book{
     int age
 }
 
+
+@Entity
+class Parent {
+    String name
+}
+
+@Entity
+class Child {
+    String name
+    static belongsTo = [parent:Parent]
+}
